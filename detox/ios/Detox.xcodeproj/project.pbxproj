@@ -52,6 +52,8 @@
 		394767F61DBF994200D72256 /* SocketRocket.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 394767E71DBF992400D72256 /* SocketRocket.framework */; };
 		394767F71DBF994500D72256 /* EarlGrey.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 394767DC1DBF991E00D72256 /* EarlGrey.framework */; };
 		394D589C1E50B59400556DB9 /* NSBundle+TestsFix.m in Sources */ = {isa = PBXBuildFile; fileRef = 394D589B1E50B59400556DB9 /* NSBundle+TestsFix.m */; };
+		3957BB5F230CDEAF00CC7F82 /* DetoxSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3957BB56230CDE9900CC7F82 /* DetoxSync.framework */; };
+		3957BB60230CDEAF00CC7F82 /* DetoxSync.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3957BB56230CDE9900CC7F82 /* DetoxSync.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		396EA67A22E0AE7D0087E4D4 /* DTXAddressInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 396EA67222E0AE7C0087E4D4 /* DTXAddressInfo.h */; };
 		396EA67B22E0AE7D0087E4D4 /* DTXAddressInfo.mm in Sources */ = {isa = PBXBuildFile; fileRef = 396EA67922E0AE7C0087E4D4 /* DTXAddressInfo.mm */; };
 		397EC9B51E7EDE0B00D5F2BB /* EarlGreyStatistics.h in Headers */ = {isa = PBXBuildFile; fileRef = 397EC9B31E7EDE0B00D5F2BB /* EarlGreyStatistics.h */; };
@@ -165,6 +167,20 @@
 			remoteGlobalIDString = FD1000E81C5B466F00B2DB0A;
 			remoteInfo = EarlGrey;
 		};
+		3957BB55230CDE9900CC7F82 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3957BB51230CDE9900CC7F82 /* DetoxSync.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 39DE8F5222F707DD00780546;
+			remoteInfo = DetoxSync;
+		};
+		3957BB5D230CDEA900CC7F82 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3957BB51230CDE9900CC7F82 /* DetoxSync.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 39DE8F5122F707DD00780546;
+			remoteInfo = DetoxSync;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -174,6 +190,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				3957BB60230CDEAF00CC7F82 /* DetoxSync.framework in CopyFiles */,
 				39319D7A1FCA0DA70045BC17 /* COSTouchVisualizer.framework in CopyFiles */,
 				39C3C3531DBF9A19008177E1 /* SocketRocket.framework in CopyFiles */,
 				39C3C3511DBF9A13008177E1 /* EarlGrey.framework in CopyFiles */,
@@ -233,6 +250,7 @@
 		394767DD1DBF992400D72256 /* SocketRocket.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SocketRocket.xcodeproj; path = SocketRocket/SocketRocket.xcodeproj; sourceTree = "<group>"; };
 		394D589A1E50B59400556DB9 /* NSBundle+TestsFix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBundle+TestsFix.h"; sourceTree = "<group>"; };
 		394D589B1E50B59400556DB9 /* NSBundle+TestsFix.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBundle+TestsFix.m"; sourceTree = "<group>"; };
+		3957BB51230CDE9900CC7F82 /* DetoxSync.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DetoxSync.xcodeproj; path = DetoxSync/DetoxSync/DetoxSync.xcodeproj; sourceTree = "<group>"; };
 		396EA67222E0AE7C0087E4D4 /* DTXAddressInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DTXAddressInfo.h; sourceTree = "<group>"; };
 		396EA67922E0AE7C0087E4D4 /* DTXAddressInfo.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DTXAddressInfo.mm; sourceTree = "<group>"; };
 		3975C78220272ED500C59ED8 /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; name = src; path = ../src; sourceTree = "<group>"; };
@@ -279,6 +297,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3957BB5F230CDEAF00CC7F82 /* DetoxSync.framework in Frameworks */,
 				393E66ED1FC5F3F40092EE89 /* COSTouchVisualizer.framework in Frameworks */,
 				394767F71DBF994500D72256 /* EarlGrey.framework in Frameworks */,
 				394767F61DBF994200D72256 /* SocketRocket.framework in Frameworks */,
@@ -449,6 +468,7 @@
 		394767D61DBF990F00D72256 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3957BB51230CDE9900CC7F82 /* DetoxSync.xcodeproj */,
 				393E66E11FC5F3E90092EE89 /* COSTouchVisualizer.xcodeproj */,
 				394767DD1DBF992400D72256 /* SocketRocket.xcodeproj */,
 				394767D71DBF991E00D72256 /* EarlGrey.xcodeproj */,
@@ -473,6 +493,14 @@
 				394767ED1DBF992400D72256 /* SocketRocket.framework */,
 				394767EF1DBF992400D72256 /* SocketRocketTests-iOS.xctest */,
 				394767F11DBF992400D72256 /* TestChat.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3957BB52230CDE9900CC7F82 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3957BB56230CDE9900CC7F82 /* DetoxSync.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -549,6 +577,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				3957BB5E230CDEA900CC7F82 /* PBXTargetDependency */,
 				393E67021FC728360092EE89 /* PBXTargetDependency */,
 				394767F51DBF993900D72256 /* PBXTargetDependency */,
 				394767F31DBF993400D72256 /* PBXTargetDependency */,
@@ -594,6 +623,10 @@
 				{
 					ProductGroup = 393E66E21FC5F3E90092EE89 /* Products */;
 					ProjectRef = 393E66E11FC5F3E90092EE89 /* COSTouchVisualizer.xcodeproj */;
+				},
+				{
+					ProductGroup = 3957BB52230CDE9900CC7F82 /* Products */;
+					ProjectRef = 3957BB51230CDE9900CC7F82 /* DetoxSync.xcodeproj */;
 				},
 				{
 					ProductGroup = 394767D81DBF991E00D72256 /* Products */;
@@ -667,6 +700,13 @@
 			fileType = wrapper.application;
 			path = TestChat.app;
 			remoteRef = 394767F01DBF992400D72256 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		3957BB56230CDE9900CC7F82 /* DetoxSync.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = DetoxSync.framework;
+			remoteRef = 3957BB55230CDE9900CC7F82 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -761,6 +801,11 @@
 			isa = PBXTargetDependency;
 			name = EarlGrey;
 			targetProxy = 394767F41DBF993900D72256 /* PBXContainerItemProxy */;
+		};
+		3957BB5E230CDEA900CC7F82 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = DetoxSync;
+			targetProxy = 3957BB5D230CDEA900CC7F82 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
