@@ -80,6 +80,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-detoxUseLegacySync YES"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-detoxSourceAppOverride com.apple.mobilesafari"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -106,6 +110,14 @@
          <CommandLineArgument
             argument = "-enableAppDelegateVerboseLogging YES"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-DTXEnableVerboseSyncResources YES"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-DTXEnableVerboseSyncSystem YES"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

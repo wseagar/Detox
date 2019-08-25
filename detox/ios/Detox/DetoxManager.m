@@ -19,6 +19,8 @@
 
 #import "DetoxInstrumentsManager.h"
 
+#import <DetoxSync/DetoxSync.h>
+
 @interface UIApplication ()
 
 - (void)_sendMotionBegan:(UIEventSubtype)arg;
@@ -29,6 +31,31 @@
 DTX_CREATE_LOG(DetoxManager)
 
 static DetoxInstrumentsManager* _recordingManager;
+
+BOOL __detoxUseLegacySyncSystem(void)
+{
+	static BOOL useLegacySystem;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		useLegacySystem = [NSUserDefaults.standardUserDefaults boolForKey:@"detoxUseLegacySync"];
+	});
+	return useLegacySystem;
+}
+
+static void DTXRunOnIdle(dispatch_block_t block)
+{
+	if_unlikely(__detoxUseLegacySyncSystem())
+	{
+		[EarlGrey detox_safeExecuteSync:block];
+		return;
+	}
+	
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[DTXSyncManager enqueueIdleBlock:^ {
+			block();
+		} queue:dispatch_get_main_queue()];
+	});
+}
 
 @interface DetoxManager() <WebSocketDelegate, TestRunnerDelegate>
 
@@ -109,10 +136,10 @@ static void detoxConditionalInit()
 
 - (void)_appDidLaunch:(NSNotification*)note
 {
-	[EarlGrey detox_safeExecuteSync:^{
+	DTXRunOnIdle(^{
 		self.isReady = YES;
 		[self _sendGeneralReadyMessage];
-	}];
+	});
 }
 
 - (void)_waitForApplicationState:(UIApplicationState)applicationState action:(NSString*)action messageId:(NSNumber*)messageId
@@ -204,9 +231,9 @@ static void detoxConditionalInit()
 
 - (void)_safeSendAction:(NSString*)action params:(NSDictionary*)params messageId:(NSNumber*)messageId
 {
-	[EarlGrey detox_safeExecuteSync:^{
+	DTXRunOnIdle(^{
 		[self.webSocket sendAction:action withParams:params withMessageId:messageId];
-	}];
+	});
 }
 
 - (void)webSocket:(WebSocket*)webSocket didReceiveAction:(NSString *)type withParams:(NSDictionary *)params withMessageId:(NSNumber *)messageId
@@ -240,7 +267,9 @@ static void detoxConditionalInit()
 	}
 	else if([type isEqualToString:@"invoke"])
 	{
-		[self.testRunner invoke:params withMessageId:messageId];
+		DTXRunOnIdle(^{
+			[self.testRunner invoke:params withMessageId:messageId];
+		});
 		return;
 	}
 	else if([type isEqualToString:@"isReady"])
@@ -320,22 +349,22 @@ static void detoxConditionalInit()
 			return;
 		}
 		
-		[EarlGrey detox_safeExecuteSync:block];
+		DTXRunOnIdle(block);
 	}
 	else if([type isEqualToString:@"shakeDevice"])
 	{
-		[EarlGrey detox_safeExecuteSync:^{
+		DTXRunOnIdle(^{
 			[self _sendShakeNotification];
 			
 			[self _safeSendAction:@"shakeDeviceDone" params:@{} messageId:messageId];
-		}];
+		});
 	}
 	else if([type isEqualToString:@"reactNativeReload"])
 	{
 		_isReady = NO;
-		[EarlGrey detox_safeExecuteSync:^{
+		DTXRunOnIdle(^{
 			[ReactNativeSupport reloadApp];
-		}];
+		});
 		
 		[self _waitForRNLoadWithId:messageId];
 		

@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+extern BOOL __detoxUseLegacySyncSystem(void);
+
 @interface DetoxManager : NSObject
 
 + (instancetype)sharedManager;

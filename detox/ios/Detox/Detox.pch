@@ -21,4 +21,9 @@ static void defer_cleanup_block(__strong void(^*block)(void)) {
 }
 #pragma clang diagnostic pop
 
+#define if_unlikely(x) if(__builtin_expect(x, 0))
+#define if_likely(x) if(__builtin_expect(x, 1))
+
+#define DTX_ALWAYS_INLINE __attribute__((__always_inline__)) inline
+
 #endif /* Detox_pch */

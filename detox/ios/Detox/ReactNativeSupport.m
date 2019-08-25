@@ -17,6 +17,8 @@
 #import "WXAnimatedDisplayLinkIdlingResource.h"
 #import "WXRNLoadIdlingResource.h"
 
+#import "DetoxManager.h"
+
 #include <dlfcn.h>
 #include <stdatomic.h>
 #include <fishhook.h>
@@ -63,8 +65,8 @@ static void swz_runRunLoopThread(id self, SEL _cmd)
 }
 
 static WXJSDisplayLinkIdlingResource* __original_displayLinkIdlingResource;
-void (*orig_addToRunLoop)(id, SEL, NSRunLoop*) = NULL;
-void swz_addToRunLoop(id self, SEL _cmd, NSRunLoop* runloop)
+static void (*orig_addToRunLoop)(id, SEL, NSRunLoop*) = NULL;
+__unused static void swz_addToRunLoop(id self, SEL _cmd, NSRunLoop* runloop)
 {
 	dispatch_sync(__currentIdlingResourceSerialQueue, ^{
 		if(__original_displayLinkIdlingResource)
@@ -89,7 +91,7 @@ static NSMutableArray* __currentDispatchQueueIdlingResources;
 
 static dispatch_queue_t (*wx_original_dispatch_queue_create)(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr);
 
-dispatch_queue_t wx_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr)
+static dispatch_queue_t wx_dispatch_queue_create(const char *_Nullable label, dispatch_queue_attr_t _Nullable attr)
 {
 	dispatch_queue_t rv = wx_original_dispatch_queue_create(label, attr);
 	
@@ -146,6 +148,32 @@ static int __detox_UIApplication_run(id self, SEL _cmd)
 __attribute__((constructor))
 static void __setupRNSupport()
 {
+	//🤦‍♂️ RN doesn't set the data source and relies on undocumented behavior.
+	Class cls = NSClassFromString(@"RCTPicker");
+	if(cls != nil)
+	{
+		SEL sel = @selector(initWithFrame:);
+		Method m = class_getInstanceMethod(cls, sel);
+		
+		if(m == nil)
+		{
+			return;
+		}
+		
+		id (*orig)(id, SEL, CGRect) = (void*)method_getImplementation(m);
+		method_setImplementation(m, imp_implementationWithBlock(^ (UIPickerView<UIPickerViewDataSource>* _self, CGRect frame) {
+			_self = orig(_self, sel, frame);
+			_self.dataSource = _self;
+			
+			return _self;
+		}));
+	}
+	
+	if_likely([NSUserDefaults.standardUserDefaults boolForKey:@"detoxUseLegacySync"] == NO)
+	{
+		return;
+	}
+	
 	wx_original_dispatch_queue_create = dlsym(RTLD_DEFAULT, "dispatch_queue_create");
 	
 	// Rebind symbols dispatch_queue_create to point to our own implementation.
@@ -159,7 +187,7 @@ static void __setupRNSupport()
 	
 	__currentIdlingResourceSerialQueue = dispatch_queue_create("__currentIdlingResourceSerialQueue", NULL);
 
-	Class cls = NSClassFromString(@"RCTModuleData");
+	cls = NSClassFromString(@"RCTModuleData");
 	if(cls == nil)
 	{
 		return;
@@ -220,27 +248,6 @@ static void __setupRNSupport()
 		
 		[[GREYUIThreadExecutor sharedInstance] registerIdlingResource:[WXAnimatedDisplayLinkIdlingResource new]];
 	}
-	
-	//🤦‍♂️ RN doesn't set the data source and relies on undocumented behavior.
-	cls = NSClassFromString(@"RCTPicker");
-	if(cls != nil)
-	{
-		SEL sel = @selector(initWithFrame:);
-		Method m = class_getInstanceMethod(cls, sel);
-		
-		if(m == nil)
-		{
-			return;
-		}
-		
-		id (*orig)(id, SEL, CGRect) = (void*)method_getImplementation(m);
-		method_setImplementation(m, imp_implementationWithBlock(^ (UIPickerView<UIPickerViewDataSource>* _self, CGRect frame) {
-			_self = orig(_self, sel, frame);
-			_self.dataSource = _self;
-			
-			return _self;
-		}));
-	}
 }
 
 @implementation ReactNativeSupport
@@ -258,17 +265,20 @@ static void __setupRNSupport()
 		return;
 	}
 	
-	dispatch_sync(__currentIdlingResourceSerialQueue, ^{
-		[__currentDispatchQueueIdlingResources enumerateObjectsUsingBlock:^(GREYDispatchQueueIdlingResource* _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-			dtx_log_info(@"Removing idling resource for queue: %@", [obj valueForKeyPath:@"dispatchQueueTracker.dispatchQueue"]);
+	if_unlikely(__detoxUseLegacySyncSystem())
+	{
+		dispatch_sync(__currentIdlingResourceSerialQueue, ^{
+			[__currentDispatchQueueIdlingResources enumerateObjectsUsingBlock:^(GREYDispatchQueueIdlingResource* _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+				dtx_log_info(@"Removing idling resource for queue: %@", [obj valueForKeyPath:@"dispatchQueueTracker.dispatchQueue"]);
+				
+				[[GREYUIThreadExecutor sharedInstance] deregisterIdlingResource:obj];
+			}];
 			
-			[[GREYUIThreadExecutor sharedInstance] deregisterIdlingResource:obj];
-		}];
+			[__currentDispatchQueueIdlingResources removeAllObjects];
+			[__observedQueues removeAllObjects];
+		});
+	}
 		
-		[__currentDispatchQueueIdlingResources removeAllObjects];
-		[__observedQueues removeAllObjects];
-	});
-	
 	id<RN_RCTBridge> bridge = [NSClassFromString(@"RCTBridge") valueForKey:@"currentBridge"];
 	
 	SEL reqRelSel = NSSelectorFromString(@"requestReload");

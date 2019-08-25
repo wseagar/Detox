@@ -297,10 +297,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3957BB5F230CDEAF00CC7F82 /* DetoxSync.framework in Frameworks */,
 				393E66ED1FC5F3F40092EE89 /* COSTouchVisualizer.framework in Frameworks */,
 				394767F71DBF994500D72256 /* EarlGrey.framework in Frameworks */,
 				394767F61DBF994200D72256 /* SocketRocket.framework in Frameworks */,
+				3957BB5F230CDEAF00CC7F82 /* DetoxSync.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -386,6 +386,7 @@
 		394767991DBF985400D72256 /* Detox */ = {
 			isa = PBXGroup;
 			children = (
+				3957BB9F230CE2E300CC7F82 /* Sync */,
 				39F642201FDD5EB000468FED /* DTXLogging.h */,
 				39F642271FDD5EB000468FED /* DTXLogging.m */,
 				39F6422B1FDD5F3300468FED /* DTXLoggingSubsystem.h */,
@@ -503,6 +504,13 @@
 				3957BB56230CDE9900CC7F82 /* DetoxSync.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3957BB9F230CE2E300CC7F82 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Sync;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
