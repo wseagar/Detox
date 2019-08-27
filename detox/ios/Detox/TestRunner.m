@@ -10,6 +10,7 @@
 #import "DTXMethodInvocation.h"
 #import "TestFailureHandler.h"
 #import <EarlGrey/GREYError.h>
+#import <DetoxSync/DetoxSync.h>
 
 @interface TestRunner()
 
@@ -67,7 +68,11 @@ extern GREYError* _dtx_elementMatcherError;
 - (void)invoke:(NSDictionary*)params withMessageId:(NSNumber *)messageId
 {
 	self.currentMessageId = messageId;
+#if LEGACY_EARLGREY_SYNC
 	grey_execute_async(^{
+#else
+	dispatch_async(dispatch_get_main_queue(), ^{
+#endif
 		id res = [DTXMethodInvocation invoke:params onError:^(NSString *error)
 				  {
 					  if (self.delegate) [self.delegate testRunnerOnError:error withMessageId:messageId];
@@ -88,24 +93,5 @@ extern GREYError* _dtx_elementMatcherError;
 		self.currentMessageId = nil;
 	});
 }
-
-/*
- 
- grey_execute_async(^{
- 
- [[EarlGrey selectElementWithMatcher:grey_accessibilityLabel(@"Click Me")]
- performAction:grey_tap()];
- 
- [[EarlGrey selectElementWithMatcher:grey_accessibilityLabel(@"Yay")]
- assertWithMatcher:grey_sufficientlyVisible()];
- 
- [[EarlGrey selectElementWithMatcher:grey_accessibilityLabel(@"Mitzi")]
- assertWithMatcher:grey_sufficientlyVisible()];
- 
- //exit(0);
- 
- });
- 
- */
 
 @end

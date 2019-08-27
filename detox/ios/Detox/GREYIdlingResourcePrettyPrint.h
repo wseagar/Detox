@@ -6,6 +6,8 @@
 //  Copyright © 2017 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "EarlGreyExtensions.h"
 #import <EarlGrey/GREYAppStateTracker.h>
 #import <EarlGrey/GREYDispatchQueueIdlingResource.h>
@@ -27,3 +29,5 @@ extern NSDictionary* _prettyPrintWebViewIdlingResource(id webview);
 extern NSDictionary* _prettyPrintJSTimerObservationIdlingResource(WXJSTimerObservationIdlingResource* jsTimer);
 extern NSDictionary* _prettyPrintRunLoopIdlingResource(WXRunLoopIdlingResource* runLoop);
 extern NSDictionary* _prettyPrintRNLoadIdlingResource(WXRNLoadIdlingResource* rnLoad);
+
+#endif

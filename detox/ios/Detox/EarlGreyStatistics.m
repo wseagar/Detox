@@ -6,6 +6,8 @@
 //  Copyright © 2017 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "EarlGreyStatistics.h"
 #import "EarlGreyExtensions.h"
 #import <EarlGrey/GREYAppStateTracker.h>
@@ -146,3 +148,5 @@ void WXFixupIdlingResourceClasses()
 }
 
 @end
+
+#endif

@@ -29,6 +29,7 @@ DTX_CREATE_LOG(ReactNativeSupport);
 
 static NSString *const RCTReloadNotification = @"RCTReloadNotification";
 
+#if LEGACY_EARLGREY_SYNC
 static dispatch_queue_t __currentIdlingResourceSerialQueue;
 
 _Atomic(CFRunLoopRef) __RNRunLoop;
@@ -145,6 +146,8 @@ static int __detox_UIApplication_run(id self, SEL _cmd)
 	return __detox_UIApplication_run_orig(self, _cmd);
 }
 
+#endif
+
 __attribute__((constructor))
 static void __setupRNSupport()
 {
@@ -174,6 +177,7 @@ static void __setupRNSupport()
 		return;
 	}
 	
+#if LEGACY_EARLGREY_SYNC
 	wx_original_dispatch_queue_create = dlsym(RTLD_DEFAULT, "dispatch_queue_create");
 	
 	// Rebind symbols dispatch_queue_create to point to our own implementation.
@@ -248,6 +252,7 @@ static void __setupRNSupport()
 		
 		[[GREYUIThreadExecutor sharedInstance] registerIdlingResource:[WXAnimatedDisplayLinkIdlingResource new]];
 	}
+#endif
 }
 
 @implementation ReactNativeSupport
@@ -265,6 +270,7 @@ static void __setupRNSupport()
 		return;
 	}
 	
+#if LEGACY_EARLGREY_SYNC
 	if_unlikely(__detoxUseLegacySyncSystem())
 	{
 		dispatch_sync(__currentIdlingResourceSerialQueue, ^{
@@ -278,6 +284,7 @@ static void __setupRNSupport()
 			[__observedQueues removeAllObjects];
 		});
 	}
+#endif
 		
 	id<RN_RCTBridge> bridge = [NSClassFromString(@"RCTBridge") valueForKey:@"currentBridge"];
 	

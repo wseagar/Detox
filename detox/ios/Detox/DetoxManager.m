@@ -32,6 +32,7 @@ DTX_CREATE_LOG(DetoxManager)
 
 static DetoxInstrumentsManager* _recordingManager;
 
+#if LEGACY_EARLGREY_SYNC
 BOOL __detoxUseLegacySyncSystem(void)
 {
 	static BOOL useLegacySystem;
@@ -41,14 +42,17 @@ BOOL __detoxUseLegacySyncSystem(void)
 	});
 	return useLegacySystem;
 }
+#endif
 
 static void DTXRunOnIdle(dispatch_block_t block)
 {
+#if LEGACY_EARLGREY_SYNC
 	if_unlikely(__detoxUseLegacySyncSystem())
 	{
 		[EarlGrey detox_safeExecuteSync:block];
 		return;
 	}
+#endif
 	
 	dispatch_async(dispatch_get_main_queue(), ^{
 		[DTXSyncManager enqueueIdleBlock:^ {
@@ -372,10 +376,16 @@ static void detoxConditionalInit()
 	}
 	else if([type isEqualToString:@"currentStatus"])
 	{
+#if LEGACY_EARLGREY_SYNC
 		NSMutableDictionary* statsStatus = [[[EarlGreyStatistics sharedInstance] currentStatus] mutableCopy];
 		statsStatus[@"messageId"] = messageId;
 		
 		[self.webSocket sendAction:@"currentStatusResult" withParams:statsStatus withMessageId:messageId];
+#else
+		NSMutableDictionary* statsStatus = @{@"messageId": messageId}.mutableCopy;
+		
+		[self.webSocket sendAction:@"currentStatusResult" withParams:statsStatus withMessageId:messageId];
+#endif
 	}
 }
 

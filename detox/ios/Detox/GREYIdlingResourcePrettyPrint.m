@@ -6,6 +6,8 @@
 //  Copyright © 2017 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "GREYIdlingResourcePrettyPrint.h"
 @import ObjectiveC;
 #include <os/log.h>
@@ -295,3 +297,5 @@ NSDictionary* _prettyPrintRNLoadIdlingResource(WXRNLoadIdlingResource* rnLoad)
 	
 	return rv;
 }
+
+#endif

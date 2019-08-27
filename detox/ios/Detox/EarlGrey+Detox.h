@@ -11,7 +11,9 @@
 
 @interface EarlGreyImpl (Detox)
 
+#if LEGACY_EARLGREY_SYNC
 - (void)detox_safeExecuteSync:(void(^)(void))block;
+#endif
 - (GREYElementInteraction *)detox_selectElementWithMatcher:(id<GREYMatcher>)elementMatcher;
 
 @end

@@ -6,6 +6,8 @@
 //  Copyright © 2017 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import <Foundation/Foundation.h>
 
 @interface EarlGreyStatistics : NSObject
@@ -16,3 +18,5 @@
 
 
 @end
+
+#endif

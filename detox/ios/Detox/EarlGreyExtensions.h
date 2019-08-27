@@ -9,6 +9,8 @@
 #import <EarlGrey/EarlGrey.h>
 #import "EarlGrey+Detox.h"
 
+#if LEGACY_EARLGREY_SYNC
+
 /**
  Expose provate Earl Grey methods
  */
@@ -20,6 +22,8 @@
 - (NSDictionary *)grey_errorDictionaryForBusyResources:(NSOrderedSet *)busyResources;
 
 @end
+
+#endif
 
 FOUNDATION_EXPORT id HC_hasProperty(NSString *propertyName, id valueMatcher);
 

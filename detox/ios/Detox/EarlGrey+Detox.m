@@ -11,6 +11,7 @@
 
 @implementation EarlGreyImpl (Detox)
 
+#if LEGACY_EARLGREY_SYNC
 - (void)detox_safeExecuteSync:(void(^)(void))block
 {
 	grey_execute_async(^{
@@ -19,6 +20,7 @@
 		} error:NULL];
 	});
 }
+#endif
 
 - (GREYElementInteraction *)detox_selectElementWithMatcher:(id<GREYMatcher>)elementMatcher
 {
