@@ -6,6 +6,8 @@
 //  Copyright © 2018 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "WXRNLoadIdlingResource.h"
 #import <stdatomic.h>
 #import "ReactNativeSupport.h"
@@ -70,3 +72,5 @@ static void __dtx_loadBundleAtURL_onProgress_onComplete(id self, SEL _cmd, NSURL
 }
 
 @end
+
+#endif

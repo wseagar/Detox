@@ -6,6 +6,8 @@
 //  Copyright © 2016 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "WXRunLoopIdlingResource.h"
 #import <stdatomic.h>
 #include <dlfcn.h>
@@ -177,3 +179,5 @@ static void __setupRNSupport()
 }
 
 @end
+
+#endif

@@ -61,6 +61,16 @@ extern void __dtx_send_external_log(const char* log) __attribute__((weak));
 	[self bringSubviewToFront:_annoyingLabel];
 }
 
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+	[super touchesBegan:touches withEvent:event];
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+	[super touchesEnded:touches withEvent:event];
+}
+
 @end
 
 @interface ShakeEventEmitter : RCTEventEmitter @end

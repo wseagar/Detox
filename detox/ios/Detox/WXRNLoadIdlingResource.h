@@ -6,6 +6,8 @@
 //  Copyright © 2018 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import <Foundation/Foundation.h>
 #import <EarlGrey/EarlGrey.h>
 
@@ -16,3 +18,5 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+#endif

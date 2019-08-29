@@ -6,6 +6,8 @@
 //  Copyright © 2016 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "WXJSTimerObservationIdlingResource.h"
 @import ObjectiveC;
 
@@ -181,3 +183,5 @@ DTX_CREATE_LOG(WXJSTimerObservationIdlingResource)
 }
 
 @end
+
+#endif

@@ -10,7 +10,6 @@
 #import "DTXMethodInvocation.h"
 #import "TestFailureHandler.h"
 #import <EarlGrey/GREYError.h>
-#import <DetoxSync/DetoxSync.h>
 
 @interface TestRunner()
 

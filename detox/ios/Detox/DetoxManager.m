@@ -19,7 +19,9 @@
 
 #import "DetoxInstrumentsManager.h"
 
+#if ! LEGACY_EARLGREY_SYNC
 #import <DetoxSync/DetoxSync.h>
+#endif
 
 @interface UIApplication ()
 
@@ -52,13 +54,13 @@ static void DTXRunOnIdle(dispatch_block_t block)
 		[EarlGrey detox_safeExecuteSync:block];
 		return;
 	}
-#endif
-	
+#else
 	dispatch_async(dispatch_get_main_queue(), ^{
 		[DTXSyncManager enqueueIdleBlock:^ {
 			block();
 		} queue:dispatch_get_main_queue()];
 	});
+#endif
 }
 
 @interface DetoxManager() <WebSocketDelegate, TestRunnerDelegate>

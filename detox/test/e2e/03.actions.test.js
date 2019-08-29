@@ -6,7 +6,7 @@ describe('Actions', () => {
     await element(by.text('Actions')).tap();
   });
 
-  it.only('should tap on an element', async () => {
+  it('should tap on an element', async () => {
     await element(by.text('Tap Me')).tap();
     await expect(element(by.text('Tap Working!!!'))).toBeVisible();
   });
@@ -21,7 +21,7 @@ describe('Actions', () => {
     await expect(element(by.text('Long Press With Duration Working!!!'))).toBeVisible();
   });
 
-  it('should multi tap on an element', async () => {
+  it.only('should multi tap on an element', async () => {
     await element(by.id('UniqueId819')).multiTap(3);
     await expect(element(by.id('UniqueId819'))).toHaveText('Taps: 3');
   });

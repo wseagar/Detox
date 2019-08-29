@@ -6,6 +6,8 @@
 //  Copyright © 2017 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "WXAnimatedDisplayLinkIdlingResource.h"
 #import "ReactNativeHeaders.h"
 
@@ -55,3 +57,5 @@ static NSString * const _nodesManagerDisplayLinkPath = @"_nodesManager._displayL
 }
 
 @end
+
+#endif

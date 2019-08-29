@@ -6,6 +6,8 @@
 //  Copyright © 2016 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 #import "WXJSDisplayLinkIdlingResource.h"
 
 @implementation WXJSDisplayLinkIdlingResource
@@ -39,3 +41,5 @@
 }
 
 @end
+
+#endif

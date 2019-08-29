@@ -6,6 +6,8 @@
 //  Copyright © 2016 Wix. All rights reserved.
 //
 
+#if LEGACY_EARLGREY_SYNC
+
 @import Foundation;
 #import <EarlGrey/EarlGrey.h>
 
@@ -14,3 +16,5 @@
 - (instancetype)initWithDisplayLink:(CADisplayLink*)displayLink;
 
 @end
+
+#endif
