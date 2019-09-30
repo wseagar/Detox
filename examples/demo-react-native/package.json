@@ -16,6 +16,7 @@
     "e2e:android-release": "npm run build:android-release && npm run test:android-release"
   },
   "dependencies": {
+    "detox-instruments-react-native-utils": "^3.0.1",
     "react": "16.8.3",
     "react-native": "0.59.9"
   },

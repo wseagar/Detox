@@ -4,6 +4,7 @@
  * @flow
  */
 
+import { Event } from 'detox-instruments-react-native-utils';
 import React, { Component } from 'react';
 import {
   AppRegistry,
@@ -16,10 +17,22 @@ import {
 class example extends Component {
   constructor(props) {
     super(props);
+
+    this._mountEvent = new Event("Performance", `Component Mount`);
+    this._mountEvent.beginInterval('Example screen');
+
     this.state = {
       greeting: undefined
     };
   }
+
+  componentDidMount() {
+    if (this._mountEvent) {
+      this._mountEvent.endInterval(Event.EventStatus.completed);
+      this._mountEvent = null;
+    }
+  }
+
   render() {
     if (this.state.greeting) return this.renderAfterButton();
     return (
@@ -49,8 +62,11 @@ class example extends Component {
     );
   }
   onButtonPress(greeting) {
-    this.setState({
-      greeting: greeting
+    const event = new Event("Performance", `Press handling`);
+    event.beginInterval();
+
+    this.setState({ greeting }, () => {
+        event.endInterval(Event.EventStatus.completed);
     });
   }
 }

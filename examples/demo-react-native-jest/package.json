@@ -15,7 +15,8 @@
   "devDependencies": {
     "detox": "^14.5.1",
     "jest": "24.8.x",
-    "jest-circus": "24.8.x"
+    "jest-circus": "24.8.x",
+    "@wix/perfer": "^1.0.28"
   },
   "detox": {
     "test-runner": "jest",
