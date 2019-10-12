@@ -1,31 +1,38 @@
 const _ = require('lodash');
+const uuid = require('./utils/uuid');
+const getFreePort = require('get-port');
 const util = require('util');
-const logger = require('./utils/logger');
 const log = require('./utils/logger').child({ __filename });
 const Device = require('./devices/Device');
-const IosDriver = require('./devices/drivers/IosDriver');
-const SimulatorDriver = require('./devices/drivers/SimulatorDriver');
-const EmulatorDriver = require('./devices/drivers/EmulatorDriver');
-const AttachedAndroidDriver = require('./devices/drivers/AttachedAndroidDriver');
+const drivers = require('./devices/drivers');
 const DetoxRuntimeError = require('./errors/DetoxRuntimeError');
-const argparse = require('./utils/argparse');
-const configuration = require('./configuration');
 const Client = require('./client/Client');
 const DetoxServer = require('./server/DetoxServer');
-const URL = require('url').URL;
 const ArtifactsManager = require('./artifacts/ArtifactsManager');
 
-const DEVICE_CLASSES = {
-  'ios.simulator': SimulatorDriver,
-  'ios.none': IosDriver,
-  'android.emulator': EmulatorDriver,
-  'android.attached': AttachedAndroidDriver,
-};
 
 class Detox {
-  constructor({deviceConfig, session}) {
-    this._deviceConfig = deviceConfig;
-    this._userSession = deviceConfig.session || session;
+  /***
+   * @param config
+   * @param {String} config.app.binaryPath
+   * @param {String} [config.app.testBinaryPath]
+   * @param {Boolean} config.behavior.cleanup
+   * @param {Boolean} config.behavior.reuse
+   * @param {Boolean} config.behavior.initGlobals
+   * @param {Boolean} config.behavior.launchApp
+   * @param {('ios.none' | 'android.attached' | 'ios.simulator' | 'android.emulator')} config.device.driver
+   * @param {String} [config.device.avdName]
+   * @param {String} [config.device.adbName]
+   * @param {String} [config.device.id]
+   * @param {String} [config.device.name]
+   * @param {String} [config.device.type]
+   * @param {String} [config.device.os]
+   * @param [config.session]
+   * @param {String} config.session.server
+   * @param {String} config.session.sessionId
+   */
+  constructor(config) {
+    this._config = config;
     this._client = null;
     this._server = null;
     this._artifactsManager = new ArtifactsManager();
@@ -33,29 +40,17 @@ class Detox {
     this.device = null;
   }
 
-  async init(userParams) {
-    const sessionConfig = await this._getSessionConfig();
-    const params = {
-      launchApp: true,
-      initGlobals: true,
-      ...userParams,
-    };
+  async init() {
+    const config = this._config;
 
-    if (!this._userSession) {
-      this._server = new DetoxServer({
-        log: logger,
-        port: new URL(sessionConfig.server).port,
-      });
+    if (!config.session) {
+      config.session = await this._initLocalSession();
     }
 
-    this._client = new Client(sessionConfig);
+    this._client = new Client(config.session);
     await this._client.connect();
 
-    const DeviceDriverClass = DEVICE_CLASSES[this._deviceConfig.type];
-    if (!DeviceDriverClass) {
-      throw new Error(`'${this._deviceConfig.type}' is not supported`);
-    }
-
+    const DeviceDriverClass = drivers.resolveDriver(config.device.driver);
     const deviceDriver = new DeviceDriverClass({
       client: this._client,
     });
@@ -64,21 +59,18 @@ class Detox {
     this._artifactsManager.registerArtifactPlugins(deviceDriver.declareArtifactPlugins());
 
     const device = new Device({
-      deviceConfig: this._deviceConfig,
+      appConfig: config.app,
+      deviceConfig: config.device,
+      sessionConfig: config.session,
       deviceDriver,
-      sessionConfig,
     });
 
-    await device.prepare(params);
+    await device.prepare(config.behavior);
 
-    const globalsToExport = {
-      ...deviceDriver.matchers,
-      device,
-    };
-
-    Object.assign(this, globalsToExport);
-    if (params.initGlobals) {
-      Object.assign(global, globalsToExport);
+    const exportedAPI = { ...deviceDriver.matchers, device };
+    Object.assign(this, exportedAPI);
+    if (config.behavior.initGlobals) {
+      Object.assign(global, exportedAPI);
     }
 
     await this._artifactsManager.onBeforeAll();
@@ -86,7 +78,19 @@ class Detox {
     return this;
   }
 
+  async _initLocalSession() {
+    const url = `ws://localhost:${await getFreePort()}`;
+    this._server = new DetoxServer({ url });
+
+    return {
+      server: url,
+      sessionId: uuid.UUID(),
+    };
+  }
+
   async cleanup() {
+    const config = this._config;
+
     await this._artifactsManager.onAfterAll();
 
     if (this._client) {
@@ -102,7 +106,7 @@ class Detox {
       await this._server.close();
     }
 
-    if (argparse.getArgValue('cleanup') && this.device) {
+    if (config.behavior.cleanup && this.device) {
       await this.device.shutdown();
     }
   }
@@ -168,14 +172,6 @@ class Detox {
       log.error({ event: 'APP_CRASH' }, `App crashed in test '${testName}', here's the native stack trace: \n${pendingAppCrash}`);
       await this.device.launchApp({ newInstance: true });
     }
-  }
-
-  async _getSessionConfig() {
-    const session = this._userSession || await configuration.defaultSession();
-
-    configuration.validateSession(session);
-
-    return session;
   }
 }
 

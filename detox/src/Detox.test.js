@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const schemes = require('./configurations.mock');
 
 const defaultPlatformEnv = {
@@ -18,11 +19,37 @@ describe('Detox', () => {
   let Detox;
   let detox;
 
-  const validDeviceConfig = schemes.validOneDeviceNoSession.configurations['ios.sim.release'];
-  const validDeviceConfigWithSession = schemes.sessionPerConfiguration.configurations['ios.sim.none'];
-  const invalidDeviceConfig = schemes.invalidDeviceNoDeviceType.configurations['ios.sim.release'];
-  const invalidDeviceTypeConfig = schemes.invalidOneDeviceTypeEmulatorNoSession.configurations['ios.sim.release'];
-  const validSession = schemes.validOneDeviceAndSession.session;
+  const invalidDetoxConfig = () => ({
+    app: {},
+    behavior: {},
+    device: {},
+  });
+
+  const validDetoxConfig = () => ({
+    app: {
+      binaryPath: 'test/app.apk',
+      testBinaryPath: 'test/app.test.apk',
+    },
+    behavior: {
+      cleanup: false,
+      reuse: false,
+      initGlobals: false,
+      launchApp: false,
+    },
+    device: {
+      driver: 'android.emulator',
+      avdName: 'emulator-5554',
+    },
+  });
+
+  const validDetoxConfigWithSession = () => ({
+    ...validDetoxConfig(),
+    session: {
+      server: 'ws://localhost:8099',
+      sessionId: 'test',
+    },
+  });
+
   const clientMockData = {lastConstructorArguments: null};
   const deviceMockData = {lastConstructorArguments: null};
 
@@ -56,7 +83,10 @@ describe('Detox', () => {
     global.device = undefined;
 
     jest.mock('./devices/drivers/IosDriver');
+    jest.mock('./devices/drivers/AndroidDriver');
     jest.mock('./devices/drivers/SimulatorDriver');
+    jest.mock('./devices/drivers/AttachedAndroidDriver');
+    jest.mock('./devices/drivers/EmulatorDriver');
     jest.mock('./devices/Device');
     jest.mock('./server/DetoxServer');
     jest.mock('./client/Client');
@@ -67,108 +97,77 @@ describe('Detox', () => {
     process.env.cleanup = true;
     Detox = require('./Detox');
 
-    detox = new Detox({deviceConfig: validDeviceConfig});
-    await detox.init();
-    await detox.cleanup();
-    expect(detox.device.shutdown).toHaveBeenCalledTimes(1);
-  });
-
-  it(`Calling detox.cleanup() before .init() should pass without exceptions`, async () => {
-    process.env.cleanup = true;
-    Detox = require('./Detox');
-
-    detox = new Detox({deviceConfig: validDeviceConfig});
+    detox = new Detox(validDetoxConfig());
     expect(() => detox.cleanup()).not.toThrowError();
   });
 
   it(`Not passing --cleanup should keep the currently running device up`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfig});
-    await detox.init();
+    detox = await new Detox(validDetoxConfig()).init();
     await detox.cleanup();
     expect(detox.device.shutdown).toHaveBeenCalledTimes(0);
   });
 
   it(`One valid device, detox should init with generated session config and default to this device`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfig});
-    await detox.init();
+    detox = await new Detox(validDetoxConfig()).init();
     expect(clientMockData.lastConstructorArguments[0]).toBeDefined();
-  });
-
-  it(`throws if device type is not supported`, async () => {
-    let exception = undefined;
-
-    try {
-      Detox = require('./Detox');
-      detox = new Detox({deviceConfig: invalidDeviceTypeConfig});
-      await detox.init();
-    } catch (e) {
-      exception = e;
-    }
-
-    expect(exception).toBeDefined();
   });
 
   it(`One valid device, detox should use session config and default to this device`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfig, session: validSession});
-    await detox.init();
+    detox = await new Detox(validDetoxConfigWithSession()).init();
 
-    expect(clientMockData.lastConstructorArguments[0]).toBe(validSession);
+    expect(clientMockData.lastConstructorArguments[0]).toEqual(validDetoxConfigWithSession().session);
   });
 
   it(`cleanup on a non initialized detox should not throw`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: invalidDeviceConfig});
-    detox.cleanup();
+    detox = new Detox(invalidDetoxConfig());
+    await detox.cleanup();
   });
 
-  it(`Detox should use session defined per configuration `, async () => {
-    process.env.configuration = 'ios.sim.none';
+  it('should export globals if behavior.initGlobals = true', async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
-    await detox.init();
-
-    const expectedSession = validDeviceConfigWithSession.session;
-    expect(clientMockData.lastConstructorArguments[0]).toBe(expectedSession);
-  });
-
-  it(`Detox should prefer session defined per configuration over common session`, async () => {
-    Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession, session: {}});
-    await detox.init();
-
-    const expectedSession = validDeviceConfigWithSession.session;
-    expect(clientMockData.lastConstructorArguments[0]).toBe(expectedSession);
-  });
-
-  it('exports globals by default', async () => {
-    Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
-    await detox.init();
+    const config = _.merge(validDetoxConfigWithSession(), { behavior: { initGlobals: true }});
+    detox = await new Detox(config).init();
     expect(global.device).toBeDefined();
   });
 
-  it(`doesn't exports globals if requested`, async () => {
+  it('should not export globals if behavior.initGlobals = false', async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
-    await detox.init({initGlobals: false});
+    const config = _.merge(validDetoxConfigWithSession(), { behavior: { initGlobals: false }});
+    detox = await new Detox(config).init();
     expect(global.device).not.toBeDefined();
+  });
+
+  it('should not shutdown device on cleanup if behavior.cleanup = false', async () => {
+    Detox = require('./Detox');
+    const config = _.merge(validDetoxConfigWithSession(), { behavior: { cleanup: false }});
+    detox = await new Detox(config).init();
+    await detox.cleanup();
+    expect(detox.device.shutdown).not.toHaveBeenCalled();
+  });
+
+  it('should shutdown device on cleanup if behavior.cleanup = true', async () => {
+    Detox = require('./Detox');
+    const config = _.merge(validDetoxConfigWithSession(), { behavior: { cleanup: true }});
+    detox = await new Detox(config).init();
+    await detox.cleanup();
+    expect(detox.device.shutdown).toHaveBeenCalled();
   });
 
   it(`handleAppCrash if client has a pending crash`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
-    await detox.init();
+    detox = await new Detox(validDetoxConfigWithSession()).init();
     detox._client.getPendingCrashAndReset.mockReturnValueOnce('crash'); // TODO: rewrite to avoid accessing private fields
     await detox.afterEach({ title: 'a', fullName: 'b', status: 'failed' });
-    expect(device.launchApp).toHaveBeenCalledTimes(1);
+    expect(detox.device.launchApp).toHaveBeenCalledTimes(1);
   });
 
   it(`handleAppCrash should not dump pending requests if testSummary has no timeout flag`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
+    detox = new Detox(validDetoxConfigWithSession());
     const testSummary = { title: 'test', fullName: 'suite - test', status: 'failed' };
 
     await detox.init();
@@ -179,10 +178,9 @@ describe('Detox', () => {
 
   it(`handleAppCrash should dump pending requests if testSummary has timeout flag`, async () => {
     Detox = require('./Detox');
-    detox = new Detox({deviceConfig: validDeviceConfigWithSession});
+    detox = await new Detox(validDetoxConfigWithSession()).init();
     const testSummary = { title: 'test', fullName: 'suite - test', status: 'failed', timedOut: true };
 
-    await detox.init();
     await detox.afterEach(testSummary);
     expect(detox._client.dumpPendingRequests).toHaveBeenCalled();
   });
@@ -193,8 +191,7 @@ describe('Detox', () => {
     beforeEach(async () => {
       jest.mock('./artifacts/ArtifactsManager');
       Detox = require('./Detox');
-      detox = new Detox({deviceConfig: validDeviceConfig});
-      await detox.init();
+      detox = await new Detox(validDetoxConfig()).init();
       artifactsManager = detox._artifactsManager; // TODO: rewrite to avoid accessing private fields
     });
 

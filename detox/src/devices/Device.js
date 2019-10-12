@@ -1,33 +1,34 @@
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
-const argparse = require('../utils/argparse');
+const DetoxRuntimeError = require('../errors/DetoxRuntimeError');
 const debug = require('../utils/debug'); //debug utils, leave here even if unused
+const fsext = require('../utils/fsext');
 
 class Device {
-  constructor({ deviceConfig, deviceDriver, sessionConfig }) {
+  constructor({ appConfig, deviceConfig, deviceDriver, sessionConfig }) {
+    this._appConfig = appConfig;
     this._deviceConfig = deviceConfig;
     this._sessionConfig = sessionConfig;
     this._processes = {};
     this.deviceDriver = deviceDriver;
-    this.deviceDriver.validateDeviceConfig(deviceConfig);
     this.debug = debug;
   }
 
-  async prepare(params = {}) {
-    this._binaryPath = this._getAbsolutePath(this._deviceConfig.binaryPath);
-    this._testBinaryPath = this._deviceConfig.testBinaryPath ? this._getAbsolutePath(this._deviceConfig.testBinaryPath) : null;
-    this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig.name);
+  async prepare(options = {}) {
+    this._binaryPath = fsext.getAbsolutePath(this._appConfig.binaryPath);
+    this._testBinaryPath = fsext.getAbsolutePath(this._appConfig.testBinaryPath);
+    this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig.matcher);
     this._bundleId = await this.deviceDriver.getBundleIdFromBinary(this._binaryPath);
 
     await this.deviceDriver.prepare();
 
-    if (!argparse.getArgValue('reuse') && !params.reuse) {
-      await this.deviceDriver.uninstallApp(this._deviceId, this._bundleId);
-      await this.deviceDriver.installApp(this._deviceId, this._binaryPath, this._testBinaryPath);
+    if (!options.reuse) {
+      await this.uninstallApp();
+      await this.installApp();
     }
 
-    if (params.launchApp) {
+    if (options.launchApp) {
       await this.launchApp({newInstance: true});
     }
   }
@@ -174,8 +175,16 @@ class Device {
   }
 
   async installApp(binaryPath, testBinaryPath) {
-    const _binaryPath = binaryPath || this._binaryPath;
-    const _testBinaryPath = testBinaryPath || this._testBinaryPath;
+    const _binaryPath = fsext.getAbsolutePath(binaryPath) || this._binaryPath;
+    const _testBinaryPath = fsext.getAbsolutePath(testBinaryPath) || this._testBinaryPath;
+
+    if (!_binaryPath && !this._binaryPath) {
+      throw new DetoxRuntimeError({
+        message: 'To install an app, you need to specify its location first',
+        hint: `Check that you have app's "binaryPath" defined in your Detox configuration.`
+      })
+    }
+
     await this.deviceDriver.installApp(this._deviceId, _binaryPath, _testBinaryPath);
   }
 
@@ -268,19 +277,6 @@ class Device {
   _prepareLaunchArgs(additionalLaunchArgs) {
     const launchArgs = _.merge(this._defaultLaunchArgs(), additionalLaunchArgs);
     return launchArgs;
-  }
-
-  _getAbsolutePath(appPath) {
-    if (path.isAbsolute(appPath)) {
-      return appPath;
-    }
-
-    const absPath = path.join(process.cwd(), appPath);
-    if (fs.existsSync(absPath)) {
-      return absPath;
-    } else {
-      throw new Error(`app binary not found at '${absPath}', did you build it?`);
-    }
   }
 
   async _terminateApp() {

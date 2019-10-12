@@ -1,0 +1,174 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`configuration composeDetoxConfig invalid cases should throw if app binary does not exist 1`] = `
+"DetoxRuntimeError: Failed to find the app binary at path: /home/x/Projects/Detox/detox/wdkhdsflkhsldkjfhlskdjf.app
+
+HINT: Have you forgotten to build the app? Check your Detox configuration:
+
+\\"unexistentBinary\\": {
+    \\"type\\": \\"ios.simulator\\",
+    \\"binaryPath\\": \\"wdkhdsflkhsldkjfhlskdjf.app\\"
+}"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw if configuration could not be deduced 1`] = `
+"DetoxRuntimeError: Cannot automatically deduce which Detox configuration to use.
+
+HINT: Pass explicitly one of the following values as --configuration <name>, or add a new one:
+
+* one
+* two"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw if configuration type is not supported 1`] = `
+"DetoxRuntimeError: Unknown device type: symbian.attached
+
+HINT: Make sure \\"type\\" in \\"unknown\\" configuration for Detox is one of the following:
+* ios.simulator
+* ios.none
+* android.emulator
+* android.attached
+
+\\"unknown\\": {
+    \\"type\\": \\"symbian.attached\\"
+}"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw if configuration was not found 1`] = `
+"DetoxRuntimeError: Cannot find a Detox configuration named \\"two\\"
+
+HINT: Was it a typo? Here are the available configurations:
+
+* one"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw if global session config has no server 1`] = `
+"DetoxRuntimeError: session.server property is missing
+
+HINT: Usually you don't need \\"session\\" configuration. If you do, then add \\"server\\" in format: \\"ws://<address>:<port>\\" to:
+
+\\"session\\": {
+    \\"sessionId\\": \\"default session config\\"
+}"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw if global session config has no sessionId 1`] = `
+"DetoxRuntimeError: session.sessionId property is missing
+
+HINT: Usually you don't need \\"session\\" configuration. If you do, then add \\"sessionId\\": \\"<some arbitrary string>\\" to:
+
+\\"session\\": {
+    \\"server\\": \\"ws://localhost:20000\\"
+}"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw on empty configurations 1`] = `
+"DetoxRuntimeError: There are no \\"configurations\\" in detoxSection object passed to detox.init(detoxSection)
+
+HINT: Make sure your \\"detox\\" section in package.json has one or more \\"configurations\\":
+
+{
+    \\"configurations\\": {}
+}"
+`;
+
+exports[`configuration composeDetoxConfig invalid cases should throw on empty section 1`] = `
+"DetoxRuntimeError: There was no Detox configuration section passed to detox.init()
+
+HINT: Make sure you pass \\"detox\\" section from package.json to detox.init(detoxSection)"
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should adapt name and os (comma-separated) from ios.simulator 1`] = `
+Object {
+  "driver": "ios.simulator",
+  "os": "iOS 12.0",
+  "type": "iPhone X",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should adapt name from android.attached 1`] = `
+Object {
+  "adbName": "QNU0011223344",
+  "driver": "android.attached",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should adapt name from android.emulator 1`] = `
+Object {
+  "avdName": "Nexus_5X_API_28",
+  "driver": "android.emulator",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should adapt name from ios.none 1`] = `
+Object {
+  "driver": "ios.none",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should adapt name from ios.simulator 1`] = `
+Object {
+  "driver": "ios.simulator",
+  "type": "iPhone X",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should find configuration explicitly 1`] = `
+Object {
+  "driver": "ios.none",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid device cases should tolerate nameless device 1`] = `
+Object {
+  "driver": "android.emulator",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid override cases should have default behavior 1`] = `
+Object {
+  "cleanup": false,
+  "initGlobals": true,
+  "launchApp": true,
+  "reuse": false,
+}
+`;
+
+exports[`configuration composeDetoxConfig valid override cases should take overrides from cli args 1`] = `
+Object {
+  "cleanup": true,
+  "initGlobals": true,
+  "launchApp": true,
+  "reuse": true,
+}
+`;
+
+exports[`configuration composeDetoxConfig valid override cases should take reuse also from initParams 1`] = `
+Object {
+  "cleanup": false,
+  "initGlobals": false,
+  "launchApp": true,
+  "reuse": true,
+}
+`;
+
+exports[`configuration composeDetoxConfig valid session cases should prefer configuration session 1`] = `
+Object {
+  "server": "ws://localhost:40000",
+  "sessionId": "custom session config",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid session cases should take configuration session 1`] = `
+Object {
+  "server": "ws://localhost:40000",
+  "sessionId": "custom session config",
+}
+`;
+
+exports[`configuration composeDetoxConfig valid session cases should take top session 1`] = `
+Object {
+  "server": "ws://localhost:20000",
+  "sessionId": "default session config",
+}
+`;

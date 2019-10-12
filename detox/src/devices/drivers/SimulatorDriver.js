@@ -134,16 +134,6 @@ class SimulatorDriver extends IosDriver {
     await this._boot(deviceId);
   }
 
-  validateDeviceConfig(deviceConfig) {
-    if (!deviceConfig.binaryPath) {
-      configuration.throwOnEmptyBinaryPath();
-    }
-
-    if (!deviceConfig.name) {
-      configuration.throwOnEmptyName();
-    }
-  }
-
   getLogsPaths(deviceId) {
     return this.applesimutils.getLogsPaths(deviceId);
   }

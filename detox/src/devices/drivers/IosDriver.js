@@ -76,10 +76,6 @@ class IosDriver extends DeviceDriverBase {
     await this.client.execute(call);
   }
 
-  validateDeviceConfig(config) {
-    //no validation
-  }
-
   getPlatform() {
     return 'ios';
   }

@@ -1,10 +1,11 @@
 const _ = require('lodash');
-const path = require('path');
-const configurationsMock = require('../configurations.mock');
 
-const validScheme = configurationsMock.validOneDeviceAndSession;
-const invalidDeviceNoBinary = configurationsMock.invalidDeviceNoBinary;
-const invalidDeviceNoDeviceName = configurationsMock.invalidDeviceNoDeviceName;
+const configurationsMock = {
+  session: {
+    server: 'ws://localhost:8099',
+    sessionId: 'test',
+  },
+};
 
 describe('Device', () => {
   let fs;
@@ -39,7 +40,7 @@ describe('Device', () => {
   beforeEach(async () => {
     fs.existsSync.mockReturnValue(true);
 
-    client = new Client(validScheme.session);
+    client = new Client(configurationsMock.session);
     await client.connect();
 
     driverMock = new DeviceDriverMock();
@@ -73,20 +74,23 @@ describe('Device', () => {
     }
   }
 
-  function schemeDevice(scheme, configuration) {
-    const device = new Device({
-      deviceConfig: scheme.configurations[configuration],
+  function validDevice(overrides) {
+    const device = new Device(_.merge({
+      appConfig: {
+        binaryPath: '/tmp/binary.app',
+      },
+      deviceConfig: {
+        driver: 'ios.simulator',
+        type: 'iPhone X',
+        os: 'iOS 12.0',
+      },
       deviceDriver: driverMock.driver,
-      sessionConfig: scheme.session,
-    });
+      sessionConfig: configurationsMock.session,
+    }, overrides));
 
     device.deviceDriver.acquireFreeDevice.mockReturnValue('mockDeviceId');
 
     return device;
-  }
-
-  function validDevice() {
-    return schemeDevice(validScheme, 'ios.sim.release');
   }
 
   it('should return the name from the driver', async () => {
@@ -97,30 +101,9 @@ describe('Device', () => {
   });
 
   describe('prepare()', () => {
-    it(`valid scheme, no binary, should throw`, async () => {
-      const device = validDevice();
-      fs.existsSync.mockReturnValue(false);
-      try {
-        await device.prepare();
-        fail('should throw')
-      } catch (ex) {
-        expect(ex.message).toMatch(/app binary not found at/)
-      }
-    });
-
     it(`valid scheme, no binary, should not throw`, async () => {
       const device = validDevice();
       await device.prepare();
-    });
-
-    it(`when reuse is enabled in CLI args should not uninstall and install`, async () => {
-      const device = validDevice();
-      argparse.getArgValue.mockReturnValue(true);
-
-      await device.prepare();
-
-      expect(driverMock.driver.uninstallApp).not.toHaveBeenCalled();
-      expect(driverMock.driver.installApp).not.toHaveBeenCalled();
     });
 
     it(`when reuse is enabled in params should not uninstall and install`, async () => {
@@ -437,7 +420,11 @@ describe('Device', () => {
 
       await device.installApp('newAppPath');
 
-      expect(driverMock.driver.installApp).toHaveBeenCalledWith(device._deviceId, 'newAppPath', undefined);
+      expect(driverMock.driver.installApp).toHaveBeenCalledWith(
+        device._deviceId,
+        expect.stringContaining('newAppPath'),
+        undefined
+      );
     });
 
     it(`with a custom test app path should use custom test app path`, async () => {
@@ -445,11 +432,20 @@ describe('Device', () => {
 
       await device.installApp('newAppPath', 'newTestAppPath');
 
-      expect(driverMock.driver.installApp).toHaveBeenCalledWith(device._deviceId, 'newAppPath', 'newTestAppPath');
+      expect(driverMock.driver.installApp).toHaveBeenCalledWith(
+        device._deviceId,
+        expect.stringContaining('newAppPath'),
+        expect.stringContaining('newTestAppPath'),
+      );
     });
 
     it(`with no args should use the default path given in configuration`, async () => {
       const device = validDevice();
+
+      await device.prepare({
+        reuse: true,
+        launchApp: false,
+      });
 
       await device.installApp();
 
@@ -643,30 +639,18 @@ describe('Device', () => {
     expect(driverMock.driver.cleanup).toHaveBeenCalledTimes(1);
   });
 
-  it(`new Device() with invalid device config (no binary) should throw`, () => {
-    expect(() => new Device({
-      deviceConfig: invalidDeviceNoBinary.configurations['ios.sim.release'],
-      deviceDriver: new SimulatorDriver(client),
-      sessionConfig: validScheme.session,
-    })).toThrowError(/binaryPath.* is missing/);
-  });
-
-  it(`new Device() with invalid device config (no device name) should throw`, () => {
-    expect(() => new Device({
-      deviceConfig: invalidDeviceNoDeviceName.configurations['ios.sim.release'],
-      deviceDriver: new SimulatorDriver(client),
-      sessionConfig: validScheme.session,
-    })).toThrowError(/name.* is missing/);
-  });
-
   it(`should accept absolute path for binary`, async () => {
-    const actualPath = await launchAndTestBinaryPath('absolutePath');
-    expect(actualPath).toEqual(process.platform === 'win32' ? 'C:\\Temp\\abcdef\\123' : '/tmp/abcdef/123');
+    const pathArg = process.platform === 'win32'
+      ? 'C:\\Temp\\abcdef\\123'
+      : '/tmp/abcdef/123';
+
+    const actualPath = await launchAndTestBinaryPath(pathArg);
+    expect(actualPath).toEqual(pathArg);
   });
 
   it(`should accept relative path for binary`, async () => {
     const actualPath = await launchAndTestBinaryPath('relativePath');
-    expect(actualPath).toEqual(path.join(process.cwd(), 'abcdef/123'));
+    expect(actualPath).toMatch(/[\\\/]relativePath/);
   });
 
   it(`pressBack() should invoke driver's pressBack()`, async () => {
@@ -711,9 +695,8 @@ describe('Device', () => {
     expect(device.deviceDriver.takeScreenshot).toHaveBeenCalledWith('name');
   });
 
-  async function launchAndTestBinaryPath(configuration) {
-    const device = schemeDevice(configurationsMock.pathsTests, configuration);
-
+  async function launchAndTestBinaryPath(binaryPath) {
+    const device = validDevice({ appConfig: { binaryPath }});
     await device.prepare();
     await device.launchApp();
 

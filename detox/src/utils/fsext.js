@@ -13,6 +13,13 @@ async function getDirectories (rootPath) {
   return dirs.sort();
 }
 
+function getAbsolutePath(rawPath) {
+  return !rawPath || path.isAbsolute(rawPath)
+    ? rawPath
+    : path.join(process.cwd(), rawPath);
+}
+
 module.exports = {
-  getDirectories
+  getDirectories,
+  getAbsolutePath,
 };

@@ -171,10 +171,6 @@ class DeviceDriverBase {
 
   }
 
-  validateDeviceConfig(deviceConfig) {
-
-  }
-
   getPlatform() {
 
   }
