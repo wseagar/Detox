@@ -4,6 +4,7 @@ const os = require('os');
 const path = require('path');
 const _which = require('which');
 const exec = require('child-process-promise').exec;
+const DetoxRuntimeError = require('../errors/DetoxRuntimeError');
 const appdatapath = require('./appdatapath');
 const fsext = require('./fsext');
 
@@ -91,10 +92,10 @@ function throwSdkIntegrityError(sdkRoot, relativeExecutablePath) {
   const name = path.basename(executablePath);
   const dir = path.dirname(executablePath);
 
-  throw new Error(
-    `There was no "${name}" executable file in directory: ${dir}.\n` +
-    `Check integrity of your Android SDK.`
-  );
+  throw new DetoxRuntimeError({
+    message: `There was no "${name}" executable file in directory: ${dir}.`,
+    hint: `Check integrity of your Android SDK.`,
+  });
 }
 
 function getDetoxVersion() {
@@ -104,7 +105,17 @@ function getDetoxVersion() {
 async function getFrameworkPath() {
   const detoxVersion = this.getDetoxVersion();
   const sha1 = (await exec(`(echo "${detoxVersion}" && xcodebuild -version) | shasum | awk '{print $1}'`)).stdout.trim();
-  return `${DETOX_LIBRARY_ROOT_PATH}/ios/${sha1}/Detox.framework`;
+  const detoxFrameworkPath = `${DETOX_LIBRARY_ROOT_PATH}/ios/${sha1}/Detox.framework`;
+
+  if (!fs.existsSync(detoxFrameworkPath)) {
+    throw new DetoxRuntimeError({
+      message: `Failed to find Detox framework at: ${detoxFrameworkPath}`,
+      hint: `Either you changed a version of Xcode, or Detox postinstall script was unsuccessful.\n` +
+            `To attempt a fix try running 'detox clean-framework-cache && detox build-framework-cache'`
+    });
+  }
+
+  return detoxFrameworkPath;
 }
 
 function getDetoxLibraryRootPath() {

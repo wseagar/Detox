@@ -1,44 +1,30 @@
 const _ = require('lodash');
-const fs = require('fs');
-const path = require('path');
 const DetoxRuntimeError = require('../errors/DetoxRuntimeError');
 const debug = require('../utils/debug'); //debug utils, leave here even if unused
 const fsext = require('../utils/fsext');
 
 class Device {
-  constructor({ appConfig, deviceConfig, deviceDriver, sessionConfig }) {
+  constructor(deviceDriver, { appConfig, deviceConfig, sessionConfig }) {
     this._appConfig = appConfig;
     this._deviceConfig = deviceConfig;
     this._sessionConfig = sessionConfig;
     this._processes = {};
+    this._debug = debug;
+
     this.deviceDriver = deviceDriver;
-    this.debug = debug;
   }
 
-  async prepare(options = {}) {
+  static async init(driver, config) {
+    return await new Device(driver, config)._prepare();
+  }
+
+  async _prepare() {
     this._binaryPath = fsext.getAbsolutePath(this._appConfig.binaryPath);
     this._testBinaryPath = fsext.getAbsolutePath(this._appConfig.testBinaryPath);
-    this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig.matcher);
+    this._deviceId = await this.deviceDriver.acquireFreeDevice(this._deviceConfig);
     this._bundleId = await this.deviceDriver.getBundleIdFromBinary(this._binaryPath);
 
-    await this.deviceDriver.prepare();
-
-    if (!options.reuse) {
-      await this.uninstallApp();
-      await this.installApp();
-    }
-
-    if (options.launchApp) {
-      await this.launchApp({newInstance: true});
-    }
-  }
-
-  createPayloadFileAndUpdatesParamsObject(key, launchKey, params, baseLaunchArgs) {
-    const payloadFilePath = this.deviceDriver.createPayloadFile(params[key]);
-    baseLaunchArgs[launchKey] = payloadFilePath;
-    //`params` will be used later for `deliverPayload`, so remove the actual notification and add the file URL
-    delete params[key];
-    params[launchKey] = payloadFilePath;
+    return this;
   }
 
   async launchApp(params = {newInstance: false}, bundleId) {
@@ -52,27 +38,8 @@ class Device {
       await this._terminateApp();
     }
 
-    const baseLaunchArgs = {
-      ...params.launchArgs,
-    };
-
-    if (params.url) {
-      baseLaunchArgs['detoxURLOverride'] = params.url;
-      if (params.sourceApp) {
-        baseLaunchArgs['detoxSourceAppOverride'] = params.sourceApp;
-      }
-    } else if (params.userNotification) {
-      this.createPayloadFileAndUpdatesParamsObject('userNotification', 'detoxUserNotificationDataURL', params, baseLaunchArgs);
-    } else if (params.userActivity) {
-      this.createPayloadFileAndUpdatesParamsObject('userActivity', 'detoxUserActivityDataURL', params, baseLaunchArgs);
-    }
-
     if (params.permissions) {
       await this.deviceDriver.setPermissions(this._deviceId, this._bundleId, params.permissions);
-    }
-
-    if (params.disableTouchIndicators) {
-      baseLaunchArgs['detoxDisableTouchIndicators'] = true;
     }
 
     const _bundleId = bundleId || this._bundleId;
@@ -82,7 +49,8 @@ class Device {
       }
     }
 
-    const processId = await this.deviceDriver.launchApp(this._deviceId, _bundleId, this._prepareLaunchArgs(baseLaunchArgs), params.languageAndLocale);
+    const launchArgs = this._prepareLaunchArgs(params);
+    const processId = await this.deviceDriver.launchApp(this._deviceId, _bundleId, launchArgs, params.languageAndLocale);
     this._processes[_bundleId] = processId;
 
     await this.deviceDriver.waitUntilReady();
@@ -267,16 +235,37 @@ class Device {
     return this.deviceDriver.getUiDevice();
   }
 
-  _defaultLaunchArgs() {
-    return {
+  _prepareLaunchArgs(params) {
+    const launchArgs = {
       'detoxServer': this._sessionConfig.server,
-      'detoxSessionId': this._sessionConfig.sessionId
+      'detoxSessionId': this._sessionConfig.sessionId,
+      ...params.launchArgs,
     };
+
+    if (params.url) {
+      launchArgs['detoxURLOverride'] = params.url;
+      if (params.sourceApp) {
+        launchArgs['detoxSourceAppOverride'] = params.sourceApp;
+      }
+    } else if (params.userNotification) {
+      this._createPayloadFileAndUpdatesParamsObject('userNotification', 'detoxUserNotificationDataURL', params, launchArgs);
+    } else if (params.userActivity) {
+      this._createPayloadFileAndUpdatesParamsObject('userActivity', 'detoxUserActivityDataURL', params, launchArgs);
+    }
+
+    if (params.disableTouchIndicators) {
+      launchArgs['detoxDisableTouchIndicators'] = true;
+    }
+
+    return launchArgs;
   }
 
-  _prepareLaunchArgs(additionalLaunchArgs) {
-    const launchArgs = _.merge(this._defaultLaunchArgs(), additionalLaunchArgs);
-    return launchArgs;
+  _createPayloadFileAndUpdatesParamsObject(key, launchKey, params, baseLaunchArgs) {
+    const payloadFilePath = this.deviceDriver.createPayloadFile(params[key]);
+    baseLaunchArgs[launchKey] = payloadFilePath;
+    //`params` will be used later for `deliverPayload`, so remove the actual notification and add the file URL
+    delete params[key];
+    params[launchKey] = payloadFilePath;
   }
 
   async _terminateApp() {

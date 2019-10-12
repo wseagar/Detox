@@ -12,8 +12,10 @@ class AttachedAndroidDriver extends AndroidDriver {
     return this._name;
   }
 
-  async acquireFreeDevice(adbName) {
+  async acquireFreeDevice(deviceConfig) {
     const { devices, stdout } = await this.adb.devices();
+
+    // TODO: deviceConfig -> check
 
     if (!devices.some(d => d.adbName === adbName)) {
       throw new DetoxRuntimeError({

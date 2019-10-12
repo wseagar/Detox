@@ -5,6 +5,10 @@ const log = require('../../utils/logger').child({ __filename });
 const environment = require('../../utils/environment');
 
 class AppleSimUtils {
+  constructor() {
+    this._getFrameworkPath = _.once(environment.getFrameworkPath);
+  }
+
   async setPermissions(udid, bundleId, permissionsObj) {
     const statusLogs = {
       trying: `Trying to set permissions...`,
@@ -103,7 +107,7 @@ class AppleSimUtils {
   }
 
   async launch(udid, bundleId, launchArgs, languageAndLocale) {
-    const frameworkPath = await environment.getFrameworkPath();
+    const frameworkPath = await this._getFrameworkPath();
     const result = await this._launchMagically(frameworkPath, udid, bundleId, launchArgs, languageAndLocale);
     await this._printLoggingHint(udid, bundleId);
 

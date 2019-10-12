@@ -25,26 +25,17 @@ class SimulatorDriver extends IosDriver {
     return this._name;
   }
 
-  async prepare() {
-    const detoxFrameworkPath = await environment.getFrameworkPath();
-
-    if (!fs.existsSync(detoxFrameworkPath)) {
-      throw new Error(`${detoxFrameworkPath} could not be found, this means either you changed a version of Xcode or Detox postinstall script was unsuccessful.
-      To attempt a fix try running 'detox clean-framework-cache && detox build-framework-cache'`);
-    }
-  }
-
   async cleanup(deviceId, bundleId) {
     await this.deviceRegistry.disposeDevice(deviceId);
     await super.cleanup(deviceId, bundleId);
   }
 
-  async acquireFreeDevice(query) {
+  async acquireFreeDevice(deviceConfig) {
     return this.deviceRegistry.allocateDevice(async () => {
-      const deviceId = await this._findOrCreateDevice(query);
+      const deviceId = await this._findOrCreateDevice(deviceConfig);
       await this._boot(deviceId);
 
-      this._name = `${deviceId} (${query})`;
+      this._name = `${deviceId} ${JSON.stringify(deviceConfig)}`;
       return deviceId;
     });
   }
@@ -152,6 +143,8 @@ class SimulatorDriver extends IosDriver {
    * @returns {Promise<String>}
    */
   async _findOrCreateDevice(deviceQuery) {
+    // TODO: return here
+
     let udid;
 
     const { free, busy } = await this._groupDevicesByStatus(deviceQuery);

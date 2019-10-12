@@ -58,14 +58,20 @@ class Detox {
     this._artifactsManager.subscribeToDeviceEvents(deviceDriver);
     this._artifactsManager.registerArtifactPlugins(deviceDriver.declareArtifactPlugins());
 
-    const device = new Device({
+    const device = await Device.init(deviceDriver, {
       appConfig: config.app,
       deviceConfig: config.device,
       sessionConfig: config.session,
-      deviceDriver,
     });
 
-    await device.prepare(config.behavior);
+    if (!config.behavior.reuse) {
+      await device.uninstallApp();
+      await device.installApp();
+    }
+
+    if (config.behavior.launchApp) {
+      await device.launchApp({newInstance: true});
+    }
 
     const exportedAPI = { ...deviceDriver.matchers, device };
     Object.assign(this, exportedAPI);

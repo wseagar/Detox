@@ -29,30 +29,43 @@ class EmulatorDriver extends AndroidDriver {
   }
 
   get name() {
-    return this._name
+    return this._name;
   }
 
-  async acquireFreeDevice(avdName) {
-    await this._validateAvd(avdName);
-    await this._fixEmulatorConfigIniSkinNameIfNeeded(avdName);
+  async acquireFreeDevice(deviceConfig) {
+    let avdName = deviceConfig.avdName;
 
+    if (avdName) {
+      await this._validateAvd(avdName);
+      await this._fixEmulatorConfigIniSkinNameIfNeeded(avdName);
+    }
+
+    const devices = await this.adb.devices();
     const adbName = await this.deviceRegistry.allocateDevice(async () => {
-      let freeEmulatorAdbName;
+      const criteria = { ...deviceConfig, busy: false };
 
-      const { devices } = await this.adb.devices();
       for (const candidate of devices) {
-        const isEmulator = candidate.type === 'emulator';
-        const isBusy = this.deviceRegistry.isDeviceBusy(candidate.adbName);
+        if (await this._deviceMatches(candidate, criteria)) {
+          return candidate.adbName;
+        }
+      }
 
-        if (isEmulator && !isBusy) {
-          if (await candidate.queryName() === avdName) {
-            freeEmulatorAdbName = candidate.adbName;
+      if (!avdName) {
+        criteria.busy = true;
+
+        for (const candidate of devices) {
+          if (await this._deviceMatches(candidate, criteria)) {
+            avdName = await candidate.queryName();
             break;
           }
         }
       }
 
-      return freeEmulatorAdbName || this._createDevice();
+      if (!avdName) {
+        throw new Error('TODO: create device without a proper avd name')
+      }
+
+      return this._createDevice();
     });
 
     await this._boot(avdName, adbName);
@@ -62,6 +75,30 @@ class EmulatorDriver extends AndroidDriver {
 
     this._name = `${adbName} (${avdName})`;
     return adbName;
+  }
+
+  async _deviceMatches(candidate, config) {
+    if (candidate.type !== 'emulator') {
+      return false;
+    }
+
+    if (config.busy !== undefined) {
+      const isDeviceBusy = this.deviceRegistry.isDeviceBusy(candidate.adbName);
+
+      if (config.busy !== isDeviceBusy) {
+        return false;
+      }
+    }
+
+    if (config.adbName && candidate.adbName !== config.adbName) {
+      return false;
+    }
+
+    if (config.avdName && (await candidate.queryName()) !== config.avdName) {
+      return false;
+    }
+
+    return true;
   }
 
   async cleanup(adbName, bundleId) {
