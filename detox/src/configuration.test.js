@@ -1,41 +1,12 @@
 const _ = require('lodash');
 const path = require('path');
 const schemes = require('./configurations.mock');
-const SimulatorInstrumentsPlugin = require('./artifacts/instruments/SimulatorInstrumentsPlugin');
-const LogArtifactPlugin = require('./artifacts/log/LogArtifactPlugin');
-const ScreenshotArtifactPlugin = require('./artifacts/screenshot/ScreenshotArtifactPlugin');
-const VideoArtifactPlugin = require('./artifacts/video/VideoArtifactPlugin');
 
 describe('configuration', () => {
   let configuration;
+
   beforeEach(() => {
     configuration = require('./configuration');
-  });
-
-  it(`generate a default config`, async () => {
-    const config = await configuration.defaultSession();
-    expect(() => config.session.server).toBeDefined();
-    expect(() => config.session.sessionId).toBeDefined();
-  });
-
-  it(`providing a valid config`, () => {
-    expect(() => configuration.validateSession(schemes.validOneDeviceAndSession.session)).not.toThrow();
-  });
-
-  it(`providing empty server config should throw`, () => {
-    testFaultySession();
-  });
-
-  it(`providing server config with no session should throw`, () => {
-    testFaultySession(schemes.validOneDeviceNoSession.session);
-  });
-
-  it(`providing server config with no session.server should throw`, () => {
-    testFaultySession(schemes.invalidSessionNoServer.session);
-  });
-
-  it(`providing server config with no session.sessionId should throw`, () => {
-    testFaultySession(schemes.invalidSessionNoSessionId.session);
   });
 
   describe('composeArtifactsConfig', () => {
@@ -186,12 +157,4 @@ describe('configuration', () => {
       }));
     });
   });
-
-  function testFaultySession(config) {
-    try {
-      configuration.validateSession(config);
-    } catch (ex) {
-      expect(ex).toBeDefined();
-    }
-  }
 });

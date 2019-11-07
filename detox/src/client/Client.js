@@ -83,7 +83,7 @@ class Client {
       invocation = invocation();
     }
 
-    if (this.slowInvocationTimeout) {
+    if (this.slowInvocationTimeout > 0) {
       this.slowInvocationStatusHandler = this.slowInvocationStatus();
     }
 

@@ -11,27 +11,6 @@ const LogArtifactPlugin = require('./artifacts/log/LogArtifactPlugin');
 const ScreenshotArtifactPlugin = require('./artifacts/screenshot/ScreenshotArtifactPlugin');
 const VideoArtifactPlugin = require('./artifacts/video/VideoArtifactPlugin');
 
-async function defaultSession() {
-  return {
-    server: `ws://localhost:${await getPort()}`,
-    sessionId: uuid.UUID()
-  };
-}
-
-function validateSession(session) {
-  if (!session) {
-    throw new Error(`No session configuration was found, pass settings under the session property`);
-  }
-
-  if (!session.server) {
-    throw new Error(`session.server property is missing, should hold the server address`);
-  }
-
-  if (!session.sessionId) {
-    throw new Error(`session.sessionId property is missing, should hold the server session id`);
-  }
-}
-
 function throwOnEmptyDevice() {
   throw new DetoxConfigError(`'device' property is empty, should hold the device query to run on (e.g. { "type": "iPhone 11 Pro" }, { "avdName": "Nexus_5X_API_29" })`);
 }
@@ -81,10 +60,65 @@ function getArtifactsCliConfig() {
   };
 }
 
+function getSessionCliConfig() {
+  return {
+    slowInvocationTimeout: argparse.getArgValue('debug-synchronization'),
+  };
+}
+
 function resolveModuleFromPath(modulePath) {
   return path.isAbsolute(modulePath)
     ? require(modulePath)
     : require(path.join(process.cwd(), modulePath));
+}
+
+async function composeSessionConfig({
+  deviceConfig,
+  detoxConfig,
+  cliConfig = getSessionCliConfig()
+}) {
+  const sessionConfig = _.defaultsDeep(
+    cliConfig,
+    deviceConfig.session,
+    detoxConfig.session,
+    {
+      sessionId: uuid.UUID(),
+      slowInvocationTimeout: 10000,
+      setupServer: false,
+    },
+  );
+
+  if (!sessionConfig.server) {
+    sessionConfig.server = `ws://localhost:${await getPort()}`;
+    sessionConfig.setupServer = true;
+  }
+
+  if (sessionConfig.slowInvocationTimeout !== 'off') {
+    sessionConfig.slowInvocationTimeout = +sessionConfig.slowInvocationTimeout;
+  } else {
+    sessionConfig.slowInvocationTimeout = 0;
+  }
+
+  validateSession(sessionConfig);
+  return sessionConfig;
+}
+
+function validateSession(session) {
+  if (!session) {
+    throw new Error(`No session configuration was found, pass settings under the session property`);
+  }
+
+  if (!session.server) {
+    throw new Error(`session.server property is missing, should hold the server address`);
+  }
+
+  if (!session.sessionId) {
+    throw new Error(`session.sessionId property is missing, should hold the server session id`);
+  }
+
+  if (isNaN(session.slowInvocationTimeout)) {
+    throw new Error(`session.slowInvocationTimeout is not a number: ${session.slowInvocationTimeout}`);
+  }
 }
 
 function composeArtifactsConfig({
@@ -139,11 +173,10 @@ function composeArtifactsConfig({
 }
 
 module.exports = {
-  defaultSession,
-  validateSession,
   throwOnEmptyDevice,
   throwOnEmptyType,
   throwOnEmptyBinaryPath,
+  composeSessionConfig,
   composeDeviceConfig,
   composeArtifactsConfig,
 };

@@ -77,7 +77,12 @@ describe('index', () => {
         rootDir: expect.stringMatching(/^artifacts[\\\/]ios\.sim\.release/),
       },
       deviceConfig: schemes.validOneDeviceNoSession.configurations['ios.sim.release'],
-      session: undefined,
+      session: {
+        server: expect.stringContaining('ws://localhost:'),
+        sessionId: expect.any(String),
+        slowInvocationTimeout: 10000,
+        setupServer: true,
+      },
     });
   });
 
@@ -94,7 +99,12 @@ describe('index', () => {
         rootDir: expect.stringMatching(/^artifacts[\\\/]ios\.sim\.debug/),
       },
       deviceConfig: schemes.validTwoDevicesNoSession.configurations['ios.sim.debug'],
-      session: undefined,
+      session: {
+        server: expect.stringContaining('ws://localhost:'),
+        sessionId: expect.any(String),
+        slowInvocationTimeout: 10000,
+        setupServer: true,
+      },
     });
   });
 
@@ -115,12 +125,7 @@ describe('index', () => {
     process.env.deviceName = 'iPhone X';
     const Detox = require('./Detox');
 
-    await detox.init(schemes.validOneDeviceNoSession);
-
-    const expectedConfig = {
-      ...schemes.validOneDeviceNoSession.configurations['ios.sim.release'],
-      device: 'iPhone X'
-    }
+    await detox.init(schemes.validOneDeviceAndSession);
 
     expect(Detox).toHaveBeenCalledWith({
       artifactsConfig: {
@@ -128,8 +133,16 @@ describe('index', () => {
         plugins: schemes.pluginsDefaultsResolved,
         rootDir: expect.stringMatching(/^artifacts[\\\/]ios\.sim\.release/),
       },
-      deviceConfig: expectedConfig,
-      session: undefined,
+      deviceConfig: {
+        ...schemes.validOneDeviceAndSession.configurations['ios.sim.release'],
+        device: 'iPhone X'
+      },
+      session: {
+        server: "ws://localhost:8099",
+        sessionId: 'test',
+        slowInvocationTimeout: 10000,
+        setupServer: false,
+      },
     });
   });
 
@@ -211,7 +224,7 @@ describe('index', () => {
 
   it(`if detox.init() fails, detox.cleanup() is called automatically`, async () => {
     mockDetox.init.mockImplementation(() => { throw new Error('test'); });
-    expect(detox.init(schemes.validOneDeviceNoSession)).rejects.toThrow();
+    await expect(detox.init(schemes.validOneDeviceNoSession)).rejects.toThrow();
     expect(mockDetox.cleanup).toHaveBeenCalled();
   });
   

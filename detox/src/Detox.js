@@ -9,7 +9,6 @@ const EmulatorDriver = require('./devices/drivers/EmulatorDriver');
 const AttachedAndroidDriver = require('./devices/drivers/AttachedAndroidDriver');
 const DetoxRuntimeError = require('./errors/DetoxRuntimeError');
 const argparse = require('./utils/argparse');
-const configuration = require('./configuration');
 const Client = require('./client/Client');
 const DetoxServer = require('./server/DetoxServer');
 const URL = require('url').URL;
@@ -25,7 +24,7 @@ const DEVICE_CLASSES = {
 class Detox {
   constructor({artifactsConfig, deviceConfig, session}) {
     this._deviceConfig = deviceConfig;
-    this._userSession = deviceConfig.session || session;
+    this._userSession = session;
     this._client = null;
     this._server = null;
     this._artifactsManager = new ArtifactsManager(artifactsConfig);
@@ -34,14 +33,15 @@ class Detox {
   }
 
   async init(userParams) {
-    const sessionConfig = await this._getSessionConfig();
+    const sessionConfig = this._userSession;
+
     const params = {
       launchApp: true,
       initGlobals: true,
       ...userParams,
     };
 
-    if (!this._userSession) {
+    if (sessionConfig.setupServer) {
       this._server = new DetoxServer({
         log: logger,
         port: new URL(sessionConfig.server).port,
@@ -168,14 +168,6 @@ class Detox {
       log.error({ event: 'APP_CRASH' }, `App crashed in test '${testName}', here's the native stack trace: \n${pendingAppCrash}`);
       await this.device.launchApp({ newInstance: true });
     }
-  }
-
-  async _getSessionConfig() {
-    const session = this._userSession || await configuration.defaultSession();
-
-    configuration.validateSession(session);
-
-    return session;
   }
 }
 
