@@ -12,10 +12,12 @@ else
 fi
 
 if [ -d "detox/test/artifacts" ]; then
+  echo "`date` Packing all artifacts..."
   tar cvzf ${ARTIFACTS_NAME} ./detox/test/artifacts/
+  echo "`date` Artifacts packing complete (./detox/test/artifacts/${ARTIFACT_NAME} is ready)"
 
   if [ $JENKINS_CI ]; then
-      echo "Jenkins has build in plugin"
+      echo "`date` Uploading to AWS S3 using Jenkins' plugin..."
   else
       aws s3 cp ${ARTIFACTS_NAME} s3://detox-artifacts/ --region=us-east-1
   fi
