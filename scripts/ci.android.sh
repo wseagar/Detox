@@ -5,9 +5,9 @@ yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
 source $(dirname "$0")/ci.sh
 
-pushd detox/android
-run_f "./gradlew test"
-popd
+#pushd detox/android
+#run_f "./gradlew test"
+#popd
 
 pushd detox/test
 # Workaround until react android issue will be fixed - react-native: 0.55
