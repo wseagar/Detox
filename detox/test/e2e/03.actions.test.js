@@ -6,7 +6,7 @@ describe('Actions', () => {
     await element(by.text('Actions')).tap();
   });
 
-  it('should tap on an element', async () => {
+  it.only('should tap on an element', async () => {
     await element(by.text('Tap Me')).tap();
     await expect(element(by.text('Tap Working!!!'))).toBeVisible();
   });
