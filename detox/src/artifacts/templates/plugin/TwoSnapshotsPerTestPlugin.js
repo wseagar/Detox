@@ -20,14 +20,14 @@ class TwoSnapshotsPerTestPlugin extends ArtifactPlugin {
     this._flushSessionSnapshots();
 
     await super.onBeforeEach(testSummary);
-    await this._takeAutomaticSnapshot('beforeEach');
+    await this._takeAutomaticSnapshot('testStart');
   }
 
   async onAfterEach(testSummary) {
     await super.onAfterEach(testSummary);
 
     if (this.shouldKeepArtifactOfTest(testSummary)) {
-      await this._takeAutomaticSnapshot('afterEach');
+      await this._takeAutomaticSnapshot('testComplete');
       this._startSavingSnapshots('fromTest');
     } else {
       this._startDiscardingSnapshots('fromTest');

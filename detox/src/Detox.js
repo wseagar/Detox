@@ -9,11 +9,13 @@ const EmulatorDriver = require('./devices/drivers/EmulatorDriver');
 const AttachedAndroidDriver = require('./devices/drivers/AttachedAndroidDriver');
 const DetoxRuntimeError = require('./errors/DetoxRuntimeError');
 const argparse = require('./utils/argparse');
+const legacyUtils = require('./utils/legacy');
 const configuration = require('./configuration');
 const Client = require('./client/Client');
 const DetoxServer = require('./server/DetoxServer');
 const URL = require('url').URL;
 const ArtifactsManager = require('./artifacts/ArtifactsManager');
+const {symbols: internals} = require('../runners/internals');
 
 const DEVICE_CLASSES = {
   'ios.simulator': SimulatorDriver,
@@ -108,6 +110,74 @@ class Detox {
   }
 
   async beforeEach(testSummary) {
+    // TODO: discourage from using the deprecated API
+    this[internals.beforeEach](testSummary);
+  }
+
+  async afterEach(testSummary) {
+    // TODO: discourage from using the deprecated API
+    this[internals.afterEach](testSummary);
+  }
+
+  async [internals.notify](event, state) {
+    switch (event.name) {
+      case 'test_start': {
+        const {test} = event;
+
+        if (test.mode !== 'skip' && test.mode !== 'todo') {
+          await this[internals.beforeEach]({
+            title: test.name,
+            fullName: legacyUtils.toFullName(test),
+            status: 'running',
+          });
+        }
+
+        break;
+      }
+      case 'test_done': {
+        const {test} = event;
+
+        await this[internals.afterEach]({
+          title: test.name,
+          fullName: legacyUtils.toFullName(test),
+          status: test.errors.length ? 'failed' : 'passed',
+          timedOut: legacyUtils.hasTimedOut(test),
+        });
+
+        break;
+      }
+      case 'hook_failure':
+      case 'test_fn_failure':
+
+
+      case 'include_test_location_in_result':
+      case 'start_describe_definition':
+      case 'finish_describe_definition':
+      case 'add_hook':
+      case 'add_test':
+      case 'hook_start':
+      case 'hook_success':
+      case 'test_fn_start':
+      case 'test_fn_success':
+      case 'test_retry':
+      case 'test_skip':
+      case 'test_todo':
+      case 'run_describe_start':
+      case 'run_describe_finish':
+      case 'run_start':
+      case 'run_finish':
+      case 'error':
+      case 'setup':
+      case 'teardown':
+        break;
+
+      default:
+        console.warn('Unknown event!! Make sure you report it to the issues.');
+    }
+
+  }
+
+  async [internals.beforeEach](testSummary) {
     this._validateTestSummary(testSummary);
     this._logTestRunCheckpoint('DETOX_BEFORE_EACH', testSummary);
     await this._dumpUnhandledErrorsIfAny({
@@ -117,7 +187,7 @@ class Detox {
     await this._artifactsManager.onBeforeEach(testSummary);
   }
 
-  async afterEach(testSummary) {
+  async [internals.afterEach](testSummary) {
     this._validateTestSummary(testSummary);
     this._logTestRunCheckpoint('DETOX_AFTER_EACH', testSummary);
     await this._artifactsManager.onAfterEach(testSummary);
