@@ -50,6 +50,17 @@ public class RNClickAction implements ViewAction {
 
     @Override
     public void perform(UiController uiController, View view) {
+        view.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 20);
+
         ReactNativeExtension.toggleTimersSynchronization(false);
         try {
             clickAction.perform(uiController, view);
